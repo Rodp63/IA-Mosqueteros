@@ -1,5 +1,5 @@
 /*****
- Computacion Grafica: CCOMP 7-1
+ CURSO: Inteligencia Artificial: CCOMP 7-1
  * Gonzales Navarrete Mateo
  * Nieto Rosas Miguel
  * Palma Ugarte Joaquin
@@ -18,12 +18,12 @@
 #include <iomanip>
 #include <thread>
 
-const int SIZE_MAP = 100;// 100
-int SIZE_PRINT = 3; // ESPACIADO PARA IMPRESION POR CONSOLA
-int NODES_TO_ELIMINATE = 2000;
-int MOVER_DIBUJO = 0; //4050 USAR SOLO CUANDO EL TAMANO DESEADO NO ES EL MAXIMO DE PANTALLA
-int AGRANDAR_ANCHO = 2; //1 -> 1 CUADRANTE | 2->4 CUADRANTES
-int AGRANDAR_ALTO = 402; //201 -> MITAD PANTALLA | 2-> ALTO DE PANTALLA
+const int SIZE_MAP = 20;
+int SIZE_PRINT = 3; 
+int NODES_TO_ELIMINATE = (SIZE_MAP* SIZE_MAP)*0.3;
+int MOVER_DIBUJO = 0; 
+int AGRANDAR_ANCHO = 10; 
+int AGRANDAR_ALTO = 2010; 
 int MIN_VALUE_COORD = 0;
 int MAX_VALUE_COORD = SIZE_MAP - 1;
 
@@ -619,15 +619,15 @@ void algoritmoBusquedaAmplitud(Coordenada<int> coordenadaPartida, Coordenada<int
             nodoPrimeroEnLista = *listPrimeraEnLista.rbegin();
             for (list<Node<float, int>*>::iterator it = nodoPrimeroEnLista->edges.begin(); it != nodoPrimeroEnLista->edges.end(); ++it)
             {
-                //if (isInsideListB((*it)->x, (*it)->y, listPrimeraEnLista) || isInsideListB((*it)->x, (*it)->y, listaNodosEliminados)) // TAL CUAL CLASES
-                if (isInsideListB((*it)->x, (*it)->y, listPrimeraEnLista) || isInsideListB((*it)->x, (*it)->y, listaNodosEliminados) || idnodosNoRespuesta[(*it)->id]) // MEJORADO
+                if (isInsideListB((*it)->x, (*it)->y, listPrimeraEnLista) || isInsideListB((*it)->x, (*it)->y, listaNodosEliminados)) // TAL CUAL CLASES
+                //if (isInsideListB((*it)->x, (*it)->y, listPrimeraEnLista) || isInsideListB((*it)->x, (*it)->y, listaNodosEliminados) || idnodosNoRespuesta[(*it)->id]) // MEJORADO
                 {
                     continue;
                 }
                 list<Node<float, int>*> listTemporal = listPrimeraEnLista;
                 listTemporal.push_back(*it);
                 listaTemporalDeBusqueda.push_back(listTemporal);
-                idnodosNoRespuesta[(*it)->id] = 1; //MEJORADO | QUITAR PARA QUE SEA STANDARD
+                //idnodosNoRespuesta[(*it)->id] = 1; //MEJORADO | QUITAR PARA QUE SEA STANDARD
             }
         }
     }
@@ -954,13 +954,16 @@ int main()
 	//CREATING DELETING NODES
 
     // OPENGL INSERTANDO NODOS ELIMINADOS
+    cout << "START INSERTING ELIMINATED...\n" << endl;
     int i = 0;
     for (list<Node<float, int>*>::iterator it = listaNodosEliminados.begin(); it != listaNodosEliminados.end(); ++it, i++) {
         figures[3][i] = (*it)->id;
     }
+    cout << "END INSERTING ELIMINATED...\n" << endl;
     // OPENGL INSERTANDO NODOS ELIMINADOS
 
 	//INSERTING EDGES
+    cout << "START INSERTING EDGES...\n" << endl;
 	for (list<Node<float, int>*>::iterator it = grafo.nodes.begin(); it != grafo.nodes.end(); ++it)
 	{
 		Node<float, int>** p;
@@ -986,7 +989,8 @@ int main()
 		if (grafo.exist(((*it)->x) + 1, ((*it)->y) + 1, p))
 			(*it)->edges.push_back(*p); // H
 	}
-	//INSERTING EDGES
+    cout << "END INSERTING EDGES...\n" << endl;
+    //INSERTING EDGES
 
     //MOSTRAR COORDENADA PARTIDA Y LLEGADA
     cout << "NODOS PARTIDA (" << coordenadaPartida.x << " , " << coordenadaPartida.y << ")" << endl;
@@ -998,7 +1002,7 @@ int main()
 
     thread threadBusquedaAmplitud(algoritmoBusquedaAmplitud, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
     thread threadBusquedaProfundidad(algoritmoBusquedaProfundidad, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
-    //thread threadNoDeterministica(algoritmoNoDeterministica, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
+    thread threadNoDeterministica(algoritmoNoDeterministica, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
     
     thread threadHillClimbing(algoritmoMejorHillClimbing, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
     thread threadMejorElPrimero(algoritmoPrimeroElMejor, coordenadaPartida, coordenadaLlegada, listaNodosEliminados, grafo);
@@ -1015,7 +1019,7 @@ int main()
 
     threadBusquedaProfundidad.join();
     threadBusquedaAmplitud.join();
-    //threadNoDeterministica.join();
+    threadNoDeterministica.join();
     
     threadHillClimbing.join();
     threadMejorElPrimero.join();
@@ -1126,7 +1130,7 @@ int main()
             break;
         case algoritmo::MEJORPRIMERO:
             //RESPUESTA MEJOR EL PRIMERO
-            glUseProgram(colorwater1);
+            glUseProgram(colorskyblue1);
             glEnable(GL_LINE_SMOOTH);
             glEnable(GL_LINE_WIDTH);
             glLineWidth(3);
