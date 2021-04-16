@@ -1,4 +1,4 @@
-#Resultados de 6 algoritmos de búsqueda
+# Resultados de 6 algoritmos de búsqueda
 API gráfica: OpenGL y GLFW
 Lenguaje: c++
 
