@@ -1,1 +1,1 @@
-![](https://cdn.discordapp.com/attachments/774383015223623731/832447695053651998/unknown.png)
+![](https://cdn.discordapp.com/attachments/774383015223623731/832451432362934332/searchalgorithms.gif)
