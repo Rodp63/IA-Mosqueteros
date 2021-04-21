@@ -25,7 +25,7 @@ short int board[8][8] = {
 
 sf::Sprite pieces[TOTAL_PIECES];
 sf::Vector2f frameOffset(28, 28);
-int size = 56;
+bool turn = 0;
 
 void LoadPosition() {
   int k = 0;
@@ -47,7 +47,7 @@ void LoadPosition() {
   }
 }
 
-bool InvalidMove(sf::Vector2f from, sf::Vector2f to) {
+bool InvalidMove(sf::Vector2f to) {
   if (to.x/PIECE_SIZE >= 8 || to.x/PIECE_SIZE < 0 ||
       to.y/PIECE_SIZE >= 8 || to.y/PIECE_SIZE < 0)
     return true;
@@ -60,9 +60,85 @@ bool InvalidMove(sf::Vector2f from, sf::Vector2f to) {
   return false;
 }
 
+enum Direction {
+  Right,
+  Left,
+  JumpRight,
+  JumpLeft,
+  Invalid
+};
+
+Direction GetDirection(sf::Vector2f from, sf::Vector2f to) {
+  auto movementVector = sf::Vector2i(int(to.x/PIECE_SIZE) - int(
+                                       from.x/PIECE_SIZE),
+                                     int(to.y/PIECE_SIZE) - int(from.y/PIECE_SIZE));
+
+  std::cout << "movementVector: " << movementVector.x << " " << movementVector.y
+            << std::endl;
+
+  if (turn == 0) {
+    if (movementVector.x == 1 && movementVector.y == -1)
+      return Right;
+
+    if (movementVector.x == 2 && movementVector.y == -2)
+      return JumpRight;
+
+    if (movementVector.x == -1 && movementVector.y == -1)
+      return Left;
+
+    if (movementVector.x == -2 && movementVector.y == -2)
+      return JumpLeft;
+  }
+  else {
+    if (movementVector.x == 1 && movementVector.y == 1)
+      return Right;
+
+    if (movementVector.x == 2 && movementVector.y == 2)
+      return JumpRight;
+
+    if (movementVector.x == -1 && movementVector.y == 1)
+      return Left;
+
+    if (movementVector.x == -2 && movementVector.y == 2)
+      return JumpLeft;
+  }
+
+  return Invalid;
+}
+
 bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
-  if (InvalidMove(from, to))
+  if (InvalidMove(to))
     return false;
+
+  Direction direction = GetDirection(from, to);
+
+  if (direction == Invalid)
+    return false;
+
+  if (direction == JumpLeft || direction == JumpRight) {
+    auto middleSquare = (from + to) / 2.f;
+    bool capturedEnemy = false;
+
+    if (turn == 0) {
+      for (int i = 0; i < TOTAL_PIECES/2; ++i) {
+        if (pieces[i].getPosition() == middleSquare) {
+          pieces[i].setPosition(-100, 0);
+          capturedEnemy = true;
+        }
+      }
+    }
+    else {
+      for (int i = TOTAL_PIECES/2; i < TOTAL_PIECES; ++i) {
+        if (pieces[i].getPosition() == middleSquare) {
+          pieces[i].setPosition(-100, 0);
+          capturedEnemy = true;
+        }
+      }
+    }
+
+    if (!capturedEnemy)
+      return false;
+  }
 
   return true;
 }
@@ -110,7 +186,7 @@ int main() {
         }
       }
 
-      if (event.type == sf::Event::MouseButtonReleased) {
+      if (event.type == sf::Event::MouseButtonReleased && movingPiece) {
         if (event.mouseButton.button == sf::Mouse::Left) {
           movingPiece = false;
           sf::Vector2f p = pieces[currentPiece].getPosition() +
@@ -120,8 +196,10 @@ int main() {
 
           if (!MovePiece(oldPiecePosition, newPiecePosition))
             pieces[currentPiece].setPosition(oldPiecePosition);
-          else
+          else {
             pieces[currentPiece].setPosition(newPiecePosition);
+            turn ^= 1;
+          }
         }
       }
     }
