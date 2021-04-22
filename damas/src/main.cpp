@@ -343,7 +343,7 @@ void DeclareResults() {
     std::cout << "AI IS THE WINNER" << std::endl;
 }
 
-void CalculateMovement() {
+bool CalculateMovement() {
   Node root(board, 0);
   short int result;
 
@@ -352,10 +352,13 @@ void CalculateMovement() {
   else
     result = root.AlphaBeta();
 
-  if (result == -INF)
+  if (result == -INF) {
     DeclareResults();
-  else
-    Copy(board, root.best_board);
+    return false;
+  }
+  
+  Copy(board, root.best_board);
+  return true;
 }
 
 void PrintBoard() {
@@ -397,7 +400,7 @@ bool PlayerHasOptions() {
 }
 
 int main() {
-  std::cout << "Do you want begin move first? (0 = no, 1 = yes) ";
+  std::cout << "Do you want to move first? (0 = no, 1 = yes) ";
   std::cin >> playerColourChoice;
   bool turn = playerColourChoice ? 0 : 1;
 
@@ -407,7 +410,7 @@ int main() {
   std::cout << "Algorithm depth? (0 - 12) ";
   std::cin >> maxDepth;
 
-  sf::RenderWindow window(sf::VideoMode(504, 504), "Damas");
+  sf::RenderWindow window(sf::VideoMode(504, 504), "The Real Damas");
 
   sf::Texture boardTexture, piecesTexture;
   boardTexture.loadFromFile("../images/board.png");
@@ -424,6 +427,7 @@ int main() {
   float deltaX, deltaY;
   sf::Vector2f oldPiecePosition, newPiecePosition;
   int currentPiece = 0;
+  bool keepGoing = true;
 
   while (window.isOpen()) {
     sf::Vector2i mousePosition = sf::Mouse::getPosition(window) -
@@ -484,8 +488,8 @@ int main() {
       pieces[currentPiece].setPosition(mousePosition.x - deltaX,
                                        mousePosition.y - deltaY);
 
-    if (turn) {
-      CalculateMovement();
+    if (turn && keepGoing) {
+      keepGoing = CalculateMovement();
       LoadPosition();
       turn ^= 1;
 
@@ -494,8 +498,10 @@ int main() {
 #endif
     }
 
-    if (!PlayerHasOptions())
+    if (!PlayerHasOptions() && keepGoing) {
       DeclareResults();
+      keepGoing = false;
+    }
 
     window.clear();
     window.draw(boardSprite);
