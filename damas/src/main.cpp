@@ -40,33 +40,38 @@ void copy(short int t1[8][8], short int t2[8][8]) {
 }
 
 struct Node {
-  
+
   short int best_board[8][8];
   short int current_board[8][8];
   short int depth;
   short int alpha, beta;
   bool minimize;
-  
-  Node(short int c[8][8], short  int d, short int a = -INF, short int b = INF) : depth(d), alpha(a), beta(b) {
+
+  Node(short int c[8][8], short  int d, short int a = -INF,
+       short int b = INF) : depth(d), alpha(a), beta(b) {
     copy(current_board, c);
     minimize = depth & 1;
   }
 
   short int func(short int table[8][8]) {
     short int ans = 0;
+
     for (int i = 0; i < 8; ++i)
       for (int j = 0; j < 8; ++j)
         ans += -table[i][j];
+
     return ans;
   }
 
   short int alphabeta() {
     if (depth == MAX_DEPTH)
       return func(current_board);
+
     // recursion
     short int best = minimize ? INF : -INF;
     short int player = minimize ? 1 : -1;
-    std::pair<short int, short int> *options = minimize ? white : black;
+    std::pair<short int, short int>* options = minimize ? white : black;
+
     // visit children
     for (int i = 0; i < 8; ++i) {
       for (int j = 0; j < 8; ++j) {
@@ -74,18 +79,22 @@ struct Node {
           for (int k = 0; k < 2; ++k) {
             short int a = i + options[k].first;
             short int b = j + options[k].second;
+
             if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0) {
               // simple move
               current_board[i][j] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1, alpha, beta);
               short int score = child.alphabeta();
+
               if (minimize) {
                 if (score < best) {
                   best = score;
                   copy(best_board, current_board);
                 }
+
                 beta = std::min(beta, best);
+
                 if (alpha >= beta)
                   return best;
               }
@@ -94,15 +103,20 @@ struct Node {
                   best = score;
                   copy(best_board, current_board);
                 }
+
                 alpha = std::max(alpha, best);
-                if (alpha >= beta) 
+
+                if (alpha >= beta)
                   return best;
               }
+
               current_board[i][j] = player;
               current_board[a][b] = 0;
             }
+
             a += options[k].first;
             b += options[k].second;
+
             if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0 &&
                 current_board[a-options[k].first][b-options[k].second] == -player) {
               // eat a piece
@@ -111,12 +125,15 @@ struct Node {
               current_board[a][b] = player;
               Node child(current_board, depth + 1, alpha, beta);
               short int score = child.alphabeta();
+
               if (minimize) {
                 if (score < best) {
                   best = score;
                   copy(best_board, current_board);
                 }
+
                 beta = std::min(beta, best);
+
                 if (alpha >= beta)
                   return best;
               }
@@ -125,10 +142,13 @@ struct Node {
                   best = score;
                   copy(best_board, current_board);
                 }
+
                 alpha = std::max(alpha, best);
+
                 if (alpha >= beta)
                   return best;
               }
+
               current_board[i][j] = player;
               current_board[a-options[k].first][b-options[k].second] = -player;
               current_board[a][b] = 0;
@@ -137,15 +157,18 @@ struct Node {
         }
       }
     }
+
     return best;
   }
   short int minmax() {
     if (depth == MAX_DEPTH)
       return func(current_board);
+
     // recursion
     short int best = minimize ? INF : -INF;
     short int player = minimize ? 1 : -1;
-    std::pair<short int, short int> *options = minimize ? white : black;
+    std::pair<short int, short int>* options = minimize ? white : black;
+
     // visit children
     for (int i = 0; i < 8; ++i) {
       for (int j = 0; j < 8; ++j) {
@@ -153,25 +176,31 @@ struct Node {
           for (int k = 0; k < 2; ++k) {
             short int a = i + options[k].first;
             short int b = j + options[k].second;
+
             if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0) {
               // simple move
               current_board[i][j] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1);
               short int score = child.minmax();
+
               if (minimize && score < best) {
                 best = score;
                 copy(best_board, current_board);
               }
+
               if (!minimize && score > best) {
                 best = score;
                 copy(best_board, current_board);
               }
+
               current_board[i][j] = player;
               current_board[a][b] = 0;
             }
+
             a += options[k].first;
             b += options[k].second;
+
             if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0 &&
                 current_board[a-options[k].first][b-options[k].second] == -player) {
               // eat a piece
@@ -180,14 +209,17 @@ struct Node {
               current_board[a][b] = player;
               Node child(current_board, depth + 1);
               short int score = child.minmax();
+
               if (minimize && score < best) {
                 best = score;
                 copy(best_board, current_board);
               }
+
               if (!minimize && score > best) {
                 best = score;
                 copy(best_board, current_board);
               }
+
               current_board[i][j] = player;
               current_board[a-options[k].first][b-options[k].second] = -player;
               current_board[a][b] = 0;
@@ -196,6 +228,7 @@ struct Node {
         }
       }
     }
+
     return best;
   }
 };
@@ -320,10 +353,22 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
 void calculate_movement() {
   Node root(board, 0);
   short int result = root.minmax();
+
   if (result == -INF)
     std::cout << "GG" << std::endl;
   else
     copy(board, root.best_board);
+}
+
+void PrintBoard() {
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j)
+      std::cout << board[i][j] << "\t";
+
+    std::cout << std::endl;
+  }
+
+  std::cout << std::endl;
 }
 
 int main() {
@@ -354,7 +399,10 @@ int main() {
 
     if (turn) {
       calculate_movement();
+      LoadPosition();
       turn ^= 1;
+
+      PrintBoard();
     }
 
     while (window.pollEvent(event)) {
@@ -387,14 +435,18 @@ int main() {
             pieces[currentPiece].setPosition(oldPiecePosition);
           else {
             pieces[currentPiece].setPosition(newPiecePosition);
+
+            board[int(oldPiecePosition.y/PIECE_SIZE)][int(oldPiecePosition.x/PIECE_SIZE)] =
+              0;
+            board[int(p.y/PIECE_SIZE)][int(p.x/PIECE_SIZE)] = turn ? -1 : 1;
+
             turn ^= 1;
-            // Actualizar board :v
+
+            PrintBoard();
           }
         }
       }
     }
-
-    // Cargar graficos del board
 
     if (movingPiece)
       pieces[currentPiece].setPosition(mousePosition.x - deltaX,
