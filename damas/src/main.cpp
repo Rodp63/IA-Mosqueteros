@@ -330,6 +330,7 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
       for (int i = 0; i < TOTAL_PIECES/2; ++i) {
         if (pieces[i].getPosition() == middleSquare) {
           pieces[i].setPosition(-100, 0);
+          board[int(pieces[i].getPosition().y/PIECE_SIZE)][int(pieces[i].getPosition().x/PIECE_SIZE)] = 0;
           capturedEnemy = true;
         }
       }
@@ -338,6 +339,7 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
       for (int i = TOTAL_PIECES/2; i < TOTAL_PIECES; ++i) {
         if (pieces[i].getPosition() == middleSquare) {
           pieces[i].setPosition(-100, 0);
+          board[int(pieces[i].getPosition().y/PIECE_SIZE)][int(pieces[i].getPosition().x/PIECE_SIZE)] = 0;
           capturedEnemy = true;
         }
       }
