@@ -6,7 +6,7 @@
 
 #define PIECE_SIZE 56
 #define TOTAL_PIECES 24
-#define MAX_DEPTH 3
+#define MAX_DEPTH 5
 #define INF 12345
 
 enum SquareOccupation {
@@ -306,8 +306,8 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
 
 void calculate_movement() {
   short int new_board[8][8];
-  //short int result = minmax(0, board, new_board);
-  short int result = alphabeta(0, board, new_board, -INF, INF);
+  short int result = minmax(0, board, new_board);
+  //short int result = alphabeta(0, board, new_board, -INF, INF);
   if (result == -INF)
     std::cout << "GG" << std::endl;
   else
@@ -327,7 +327,6 @@ int main() {
   sf::Sprite boardSprite(boardTexture);
 
   LoadPosition();
-  calculate_movement();
 
   bool movingPiece = false;
   float deltaX, deltaY;
@@ -339,6 +338,11 @@ int main() {
                                    frameOffset);
 
     sf::Event event;
+
+    if (turn) {
+      calculate_movement();
+      turn ^= 1;
+    }
 
     while (window.pollEvent(event)) {
       if (event.type == sf::Event::Closed)
@@ -371,10 +375,13 @@ int main() {
           else {
             pieces[currentPiece].setPosition(newPiecePosition);
             turn ^= 1;
+            // Actualizar board :v
           }
         }
       }
-    }    
+    }
+
+    // Cargar graficos del board
 
     if (movingPiece)
       pieces[currentPiece].setPosition(mousePosition.x - deltaX,
