@@ -6,14 +6,8 @@
 
 #define PIECE_SIZE 56
 #define TOTAL_PIECES 24
-#define MAX_DEPTH 10
 #define INF 12345
-
-enum SquareOccupation {
-  BLACK_PIECE,
-  EMPTY_SQUARE,
-  WHITE_PIECE
-};
+#define EMPTY_SQUARE 0
 
 short int board[8][8] = {
   {0, -1, 0, -1, 0, -1, 0, -1},
@@ -28,19 +22,32 @@ short int board[8][8] = {
 
 sf::Sprite pieces[TOTAL_PIECES];
 sf::Vector2f frameOffset(28, 28);
-bool turn = 0;
+bool playerColourChoice;
+bool searchAlgorithm;
+short int playerPiece = 1;
+short int aiPiece = -1;
+short int maxDepth;
 
-std::pair<short int, short int> black[2] = {{1, -1}, {1, 1}};
-std::pair<short int, short int> white[2] = {{-1, -1}, {-1, 1}};
+std::pair<short int, short int> aiOpts[2] = {{1, -1}, {1, 1}};
+std::pair<short int, short int> playerOpts[2] = {{-1, -1}, {-1, 1}};
 
-void copy(short int t1[8][8], short int t2[8][8]) {
+void Copy(short int t1[8][8], short int t2[8][8]) {
   for (int i = 0; i < 8; ++i)
     for (int j = 0; j < 8; ++j)
       t1[i][j] = t2[i][j];
 }
 
-struct Node {
+short int ValueFunction(short int table[8][8]) {
+  short int ans = 0;
 
+  for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 8; ++j)
+      ans += -table[i][j];
+
+  return ans;
+}
+
+struct Node {
   short int best_board[8][8];
   short int current_board[8][8];
   short int depth;
@@ -49,28 +56,18 @@ struct Node {
 
   Node(short int c[8][8], short  int d, short int a = -INF,
        short int b = INF) : depth(d), alpha(a), beta(b) {
-    copy(current_board, c);
+    Copy(current_board, c);
     minimize = depth & 1;
   }
 
-  short int func(short int table[8][8]) {
-    short int ans = 0;
-
-    for (int i = 0; i < 8; ++i)
-      for (int j = 0; j < 8; ++j)
-        ans += -table[i][j];
-
-    return ans;
-  }
-
-  short int alphabeta() {
-    if (depth == MAX_DEPTH)
-      return func(current_board);
+  short int AlphaBeta() {
+    if (depth == maxDepth)
+      return ValueFunction(current_board);
 
     // recursion
     short int best = minimize ? INF : -INF;
     short int player = minimize ? 1 : -1;
-    std::pair<short int, short int>* options = minimize ? white : black;
+    std::pair<short int, short int>* options = minimize ? playerOpts : aiOpts;
 
     // visit children
     for (int i = 0; i < 8; ++i) {
@@ -85,12 +82,12 @@ struct Node {
               current_board[i][j] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1, alpha, beta);
-              short int score = child.alphabeta();
+              short int score = child.AlphaBeta();
 
               if (minimize) {
                 if (score < best) {
                   best = score;
-                  copy(best_board, current_board);
+                  Copy(best_board, current_board);
                 }
 
                 beta = std::min(beta, best);
@@ -101,7 +98,7 @@ struct Node {
               else {
                 if (score > best) {
                   best = score;
-                  copy(best_board, current_board);
+                  Copy(best_board, current_board);
                 }
 
                 alpha = std::max(alpha, best);
@@ -124,12 +121,12 @@ struct Node {
               current_board[a-options[k].first][b-options[k].second] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1, alpha, beta);
-              short int score = child.alphabeta();
+              short int score = child.AlphaBeta();
 
               if (minimize) {
                 if (score < best) {
                   best = score;
-                  copy(best_board, current_board);
+                  Copy(best_board, current_board);
                 }
 
                 beta = std::min(beta, best);
@@ -140,7 +137,7 @@ struct Node {
               else {
                 if (score > best) {
                   best = score;
-                  copy(best_board, current_board);
+                  Copy(best_board, current_board);
                 }
 
                 alpha = std::max(alpha, best);
@@ -161,14 +158,14 @@ struct Node {
     return best;
   }
 
-  short int minmax() {
-    if (depth == MAX_DEPTH)
-      return func(current_board);
+  short int MinMax() {
+    if (depth == maxDepth)
+      return ValueFunction(current_board);
 
     // recursion
     short int best = minimize ? INF : -INF;
     short int player = minimize ? 1 : -1;
-    std::pair<short int, short int>* options = minimize ? white : black;
+    std::pair<short int, short int>* options = minimize ? playerOpts : aiOpts;
 
     // visit children
     for (int i = 0; i < 8; ++i) {
@@ -183,16 +180,16 @@ struct Node {
               current_board[i][j] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1);
-              short int score = child.minmax();
+              short int score = child.MinMax();
 
               if (minimize && score < best) {
                 best = score;
-                copy(best_board, current_board);
+                Copy(best_board, current_board);
               }
 
               if (!minimize && score > best) {
                 best = score;
-                copy(best_board, current_board);
+                Copy(best_board, current_board);
               }
 
               current_board[i][j] = player;
@@ -209,16 +206,16 @@ struct Node {
               current_board[a-options[k].first][b-options[k].second] = 0;
               current_board[a][b] = player;
               Node child(current_board, depth + 1);
-              short int score = child.minmax();
+              short int score = child.MinMax();
 
               if (minimize && score < best) {
                 best = score;
-                copy(best_board, current_board);
+                Copy(best_board, current_board);
               }
 
               if (!minimize && score > best) {
                 best = score;
-                copy(best_board, current_board);
+                Copy(best_board, current_board);
               }
 
               current_board[i][j] = player;
@@ -240,12 +237,16 @@ void LoadPosition() {
 
   for (int i = 0; i < 8; ++i) {
     for (int j = 0; j < 8; ++j) {
-      square = board[i][j] + 1;
+      square = board[i][j];
 
       if (square == EMPTY_SQUARE)
         continue;
 
-      y = (square > 0) ? 1 : 0;
+      if (playerColourChoice == 0)
+        y = (square > 0) ? 1 : 0;
+      else
+        y = (square > 0) ? 0 : 1;
+
       pieces[k].setTextureRect( sf::IntRect(0, PIECE_SIZE*y,
                                             PIECE_SIZE, PIECE_SIZE) );
       pieces[k].setPosition(PIECE_SIZE * j, PIECE_SIZE * i);
@@ -283,35 +284,17 @@ Direction GetDirection(sf::Vector2f from, sf::Vector2f to) {
                                        from.x/PIECE_SIZE),
                                      int(to.y/PIECE_SIZE) - int(from.y/PIECE_SIZE));
 
-  std::cout << "movementVector: " << movementVector.x << " " << movementVector.y
-            << std::endl;
+  if (movementVector.x == 1 && movementVector.y == -1)
+    return Right;
 
-  if (turn == 0) {
-    if (movementVector.x == 1 && movementVector.y == -1)
-      return Right;
+  if (movementVector.x == 2 && movementVector.y == -2)
+    return JumpRight;
 
-    if (movementVector.x == 2 && movementVector.y == -2)
-      return JumpRight;
+  if (movementVector.x == -1 && movementVector.y == -1)
+    return Left;
 
-    if (movementVector.x == -1 && movementVector.y == -1)
-      return Left;
-
-    if (movementVector.x == -2 && movementVector.y == -2)
-      return JumpLeft;
-  }
-  else {
-    if (movementVector.x == 1 && movementVector.y == 1)
-      return Right;
-
-    if (movementVector.x == 2 && movementVector.y == 2)
-      return JumpRight;
-
-    if (movementVector.x == -1 && movementVector.y == 1)
-      return Left;
-
-    if (movementVector.x == -2 && movementVector.y == 2)
-      return JumpLeft;
-  }
+  if (movementVector.x == -2 && movementVector.y == -2)
+    return JumpLeft;
 
   return Invalid;
 }
@@ -335,7 +318,7 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
                             piecePosition.x/PIECE_SIZE)];
 
       if (piecePosition == middleSquare
-          && square == ((turn) ? 1 : -1)) {
+          && square == aiPiece) {
         square = 0;
         pieces[i].setPosition(-100, 0);
         capturedEnemy = true;
@@ -349,14 +332,30 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
   return true;
 }
 
-void calculate_movement() {
+void DeclareResults() {
+  short int result = ValueFunction(board);
+
+  if (result < 0)
+    std::cout << "PLAYER IS THE WINNER" << std::endl;
+  else if (result == 0)
+    std::cout << "GAME TIED. NOBODY WINS" << std::endl;
+  else
+    std::cout << "AI IS THE WINNER" << std::endl;
+}
+
+void CalculateMovement() {
   Node root(board, 0);
-  short int result = root.alphabeta();
+  short int result;
+
+  if (searchAlgorithm == 0)
+    result = root.MinMax();
+  else
+    result = root.AlphaBeta();
 
   if (result == -INF)
-    std::cout << "GG" << std::endl;
+    DeclareResults();
   else
-    copy(board, root.best_board);
+    Copy(board, root.best_board);
 }
 
 void PrintBoard() {
@@ -370,7 +369,44 @@ void PrintBoard() {
   std::cout << std::endl;
 }
 
+bool PlayerHasOptions() {
+  std::pair<short int, short int>* options = playerOpts;
+
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      if (board[i][j] == playerPiece) {
+        for (int k = 0; k < 2; ++k) {
+          short int a = i + options[k].first;
+          short int b = j + options[k].second;
+
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && board[a][b] == 0)
+            return true;
+
+          a += options[k].first;
+          b += options[k].second;
+
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && board[a][b] == 0 &&
+              board[a-options[k].first][b-options[k].second] == aiPiece)
+            return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 int main() {
+  std::cout << "Do you want begin move first? (0 = no, 1 = yes) ";
+  std::cin >> playerColourChoice;
+  bool turn = playerColourChoice ? 0 : 1;
+
+  std::cout << "Use MinMax or AlphaBeta? (0 = MinMax, 1 = AlphaBeta) ";
+  std::cin >> searchAlgorithm;
+
+  std::cout << "Algorithm depth? (0 - 12) ";
+  std::cin >> maxDepth;
+
   sf::RenderWindow window(sf::VideoMode(504, 504), "Damas");
 
   sf::Texture boardTexture, piecesTexture;
@@ -403,7 +439,6 @@ int main() {
         if (event.mouseButton.button == sf::Mouse::Left) {
           for (int i = 0; i < TOTAL_PIECES; ++i) {
             const sf::Vector2f& piecePosition = pieces[i].getPosition();
-            int playerPiece = turn ? -1 : 1;
 
             if (pieces[i].getGlobalBounds().contains(mousePosition.x, mousePosition.y)
                 && board[int(piecePosition.y/PIECE_SIZE)][int(piecePosition.x/PIECE_SIZE)] ==
@@ -433,11 +468,13 @@ int main() {
 
             board[int(oldPiecePosition.y/PIECE_SIZE)][int(oldPiecePosition.x/PIECE_SIZE)] =
               0;
-            board[int(p.y/PIECE_SIZE)][int(p.x/PIECE_SIZE)] = turn ? -1 : 1;
+            board[int(p.y/PIECE_SIZE)][int(p.x/PIECE_SIZE)] = playerPiece;
 
             turn ^= 1;
 
+#ifndef NDEBUG
             PrintBoard();
+#endif
           }
         }
       }
@@ -448,11 +485,17 @@ int main() {
                                        mousePosition.y - deltaY);
 
     if (turn) {
-      calculate_movement();
-      PrintBoard();
+      CalculateMovement();
       LoadPosition();
       turn ^= 1;
+
+#ifndef NDEBUG
+      PrintBoard();
+#endif
     }
+
+    if (!PlayerHasOptions())
+      DeclareResults();
 
     window.clear();
     window.draw(boardSprite);
