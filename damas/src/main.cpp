@@ -6,7 +6,7 @@
 
 #define PIECE_SIZE 56
 #define TOTAL_PIECES 24
-#define MAX_DEPTH 5
+#define MAX_DEPTH 10
 #define INF 12345
 
 enum SquareOccupation {
@@ -160,6 +160,7 @@ struct Node {
 
     return best;
   }
+
   short int minmax() {
     if (depth == MAX_DEPTH)
       return func(current_board);
@@ -233,7 +234,6 @@ struct Node {
   }
 };
 
-
 void LoadPosition() {
   int k = 0;
   int square, y;
@@ -252,6 +252,9 @@ void LoadPosition() {
       ++k;
     }
   }
+
+  for (; k < TOTAL_PIECES; ++k)
+    pieces[k].setPosition(-100, 0);
 }
 
 bool InvalidMove(sf::Vector2f to) {
@@ -326,22 +329,16 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
     auto middleSquare = (from + to) / 2.f;
     bool capturedEnemy = false;
 
-    if (turn == 0) {
-      for (int i = 0; i < TOTAL_PIECES/2; ++i) {
-        if (pieces[i].getPosition() == middleSquare) {
-          pieces[i].setPosition(-100, 0);
-          board[int(pieces[i].getPosition().y/PIECE_SIZE)][int(pieces[i].getPosition().x/PIECE_SIZE)] = 0;
-          capturedEnemy = true;
-        }
-      }
-    }
-    else {
-      for (int i = TOTAL_PIECES/2; i < TOTAL_PIECES; ++i) {
-        if (pieces[i].getPosition() == middleSquare) {
-          pieces[i].setPosition(-100, 0);
-          board[int(pieces[i].getPosition().y/PIECE_SIZE)][int(pieces[i].getPosition().x/PIECE_SIZE)] = 0;
-          capturedEnemy = true;
-        }
+    for (int i = 0; i < TOTAL_PIECES; ++i) {
+      const sf::Vector2f& piecePosition = pieces[i].getPosition();
+      short int& square = board[int(piecePosition.y/PIECE_SIZE)][int(
+                            piecePosition.x/PIECE_SIZE)];
+
+      if (piecePosition == middleSquare
+          && square == ((turn) ? 1 : -1)) {
+        square = 0;
+        pieces[i].setPosition(-100, 0);
+        capturedEnemy = true;
       }
     }
 
@@ -354,7 +351,7 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
 
 void calculate_movement() {
   Node root(board, 0);
-  short int result = root.minmax();
+  short int result = root.alphabeta();
 
   if (result == -INF)
     std::cout << "GG" << std::endl;
@@ -386,7 +383,6 @@ int main() {
   sf::Sprite boardSprite(boardTexture);
 
   LoadPosition();
-  calculate_movement();
 
   bool movingPiece = false;
   float deltaX, deltaY;
@@ -394,18 +390,10 @@ int main() {
   int currentPiece = 0;
 
   while (window.isOpen()) {
-    sf::Vector2i mousePosition = sf::Mouse::getPosition(window) - sf::Vector2i(
-                                   frameOffset);
+    sf::Vector2i mousePosition = sf::Mouse::getPosition(window) -
+                                 sf::Vector2i(frameOffset);
 
     sf::Event event;
-
-    if (turn) {
-      calculate_movement();
-      LoadPosition();
-      turn ^= 1;
-
-      PrintBoard();
-    }
 
     while (window.pollEvent(event)) {
       if (event.type == sf::Event::Closed)
@@ -414,12 +402,17 @@ int main() {
       if (event.type == sf::Event::MouseButtonPressed) {
         if (event.mouseButton.button == sf::Mouse::Left) {
           for (int i = 0; i < TOTAL_PIECES; ++i) {
-            if (pieces[i].getGlobalBounds().contains(mousePosition.x, mousePosition.y)) {
+            const sf::Vector2f& piecePosition = pieces[i].getPosition();
+            int playerPiece = turn ? -1 : 1;
+
+            if (pieces[i].getGlobalBounds().contains(mousePosition.x, mousePosition.y)
+                && board[int(piecePosition.y/PIECE_SIZE)][int(piecePosition.x/PIECE_SIZE)] ==
+                playerPiece) {
               movingPiece = true;
               currentPiece = i;
-              deltaX = mousePosition.x - pieces[i].getPosition().x;
-              deltaY = mousePosition.y - pieces[i].getPosition().y;
-              oldPiecePosition = pieces[i].getPosition();
+              deltaX = mousePosition.x - piecePosition.x;
+              deltaY = mousePosition.y - piecePosition.y;
+              oldPiecePosition = piecePosition;
             }
           }
         }
@@ -453,6 +446,13 @@ int main() {
     if (movingPiece)
       pieces[currentPiece].setPosition(mousePosition.x - deltaX,
                                        mousePosition.y - deltaY);
+
+    if (turn) {
+      calculate_movement();
+      PrintBoard();
+      LoadPosition();
+      turn ^= 1;
+    }
 
     window.clear();
     window.draw(boardSprite);
