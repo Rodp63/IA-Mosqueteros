@@ -1,10 +1,13 @@
 #include <iostream>
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 
 #define PIECE_SIZE 56
 #define TOTAL_PIECES 24
+#define MAX_DEPTH 3
+#define INF 12345
 
 enum SquareOccupation {
   BLACK_PIECE,
@@ -26,6 +29,164 @@ short int board[8][8] = {
 sf::Sprite pieces[TOTAL_PIECES];
 sf::Vector2f frameOffset(28, 28);
 bool turn = 0;
+
+std::pair<short int, short int> black[2] = {{1, -1}, {1, 1}};
+std::pair<short int, short int> white[2] = {{-1, -1}, {-1, 1}};
+
+void copy(short int t1[8][8], short int t2[8][8]) {
+  for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 8; ++j)
+      t1[i][j] = t2[i][j];
+}
+
+short int func(short int table[8][8]) {
+  short int ans = 0;
+  for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 8; ++j)
+      ans += -table[i][j];
+  return ans;
+}
+
+short int alphabeta(short int depth, short int current_board[8][8], short int best_board[8][8],
+                   short int alpha, short int beta) {
+  if (depth == MAX_DEPTH)
+    return func(current_board);
+  // recursion
+  short int best = depth & 1 ? INF : -INF;
+  short int player = depth & 1 ? 1 : -1;
+  std::pair<short int, short int> *options = depth & 1 ? white : black;
+   // visit children
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      if (current_board[i][j] == player) {
+        for (int k = 0; k < 2; ++k) {
+          short int a = i + options[k].first;
+          short int b = i + options[k].second;
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0) {
+            // simple move
+            current_board[i][j] = 0;
+            current_board[a][b] = player;
+            short int score = alphabeta(depth + 1, current_board, best_board, alpha, beta);
+            if (depth & 1) {
+              // minimize
+              if (score < best) {
+                best = score;
+                copy(best_board, current_board);
+              }
+              beta = std::min(beta, best);
+              if (alpha >= beta)
+                return best;
+            }
+            else {
+              // maximize
+              if (score > best) {
+                best = score;
+                copy(best_board, current_board);
+              }
+              alpha = std::max(alpha, best);
+              if (alpha >= beta)
+                return best;
+            }
+            current_board[i][j] = player;
+            current_board[a][b] = 0;
+          }
+          a += options[k].first;
+          b += options[k].second;
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0 &&
+              current_board[a-options[k].first][b-options[k].second] == -player) {
+            // eat a piece
+            current_board[i][j] = 0;
+            current_board[a-options[k].first][b-options[k].second] = 0;
+            current_board[a][b] = player;
+            short int score = alphabeta(depth + 1, current_board, best_board, alpha, beta);
+            if (depth & 1) {
+              // minimize
+              if (score < best) {
+                best = score;
+                copy(best_board, current_board);
+              }
+              beta = std::min(beta, best);
+              if (alpha >= beta)
+                return best;
+            }
+            else {
+              // maximize
+              if (score > best) {
+                best = score;
+                copy(best_board, current_board);
+              }
+              alpha = std::max(alpha, best);
+              if (alpha >= beta)
+                return best;
+            }
+            current_board[i][j] = player;
+            current_board[a-options[k].first][b-options[k].second] = -player;
+            current_board[a][b] = 0;
+          }
+        }
+      }
+    }
+  }
+  return best;
+}
+
+short int minmax(short int depth, short int current_board[8][8], short int best_board[8][8]) {
+  if (depth == MAX_DEPTH)
+    return func(current_board);
+  // recursion
+  short int best = depth & 1 ? INF : -INF;
+  short int player = depth & 1 ? 1 : -1;
+  std::pair<short int, short int> *options = depth & 1 ? white : black;
+  // visit children
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      if (current_board[i][j] == player) {
+        for (int k = 0; k < 2; ++k) {
+          short int a = i + options[k].first;
+          short int b = i + options[k].second;
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0) {
+            // simple move
+            current_board[i][j] = 0;
+            current_board[a][b] = player;
+            short int score = minmax(depth + 1, current_board, best_board);
+            if (depth & 1 && score < best) {
+              best = score;
+              copy(best_board, current_board);
+            }
+            if (!(depth & 1) && score > best) {
+              best = score;
+              copy(best_board, current_board);
+            }
+            current_board[i][j] = player;
+            current_board[a][b] = 0;
+          }
+          a += options[k].first;
+          b += options[k].second;
+          if (a >= 0 && a < 8 && b >= 0 && b < 8 && current_board[a][b] == 0 &&
+              current_board[a-options[k].first][b-options[k].second] == -player) {
+            // eat a piece
+            current_board[i][j] = 0;
+            current_board[a-options[k].first][b-options[k].second] = 0;
+            current_board[a][b] = player;
+            short int score = minmax(depth + 1, current_board, best_board);
+            if (depth & 1 && score < best) {
+              best = score;
+              copy(best_board, current_board);
+            }
+            if (!(depth & 1) && score > best) {
+              best = score;
+              copy(best_board, current_board);
+            }
+            current_board[i][j] = player;
+            current_board[a-options[k].first][b-options[k].second] = -player;
+            current_board[a][b] = 0;
+          }
+        }
+      }
+    }
+  }
+  return best;
+}
 
 void LoadPosition() {
   int k = 0;
@@ -143,6 +304,16 @@ bool MovePiece(sf::Vector2f from, sf::Vector2f to) {
   return true;
 }
 
+void calculate_movement() {
+  short int new_board[8][8];
+  //short int result = minmax(0, board, new_board);
+  short int result = alphabeta(0, board, new_board, -INF, INF);
+  if (result == -INF)
+    std::cout << "GG" << std::endl;
+  else
+    copy(board, new_board);
+}
+
 int main() {
   sf::RenderWindow window(sf::VideoMode(504, 504), "Damas");
 
@@ -156,6 +327,7 @@ int main() {
   sf::Sprite boardSprite(boardTexture);
 
   LoadPosition();
+  calculate_movement();
 
   bool movingPiece = false;
   float deltaX, deltaY;
@@ -202,7 +374,7 @@ int main() {
           }
         }
       }
-    }
+    }    
 
     if (movingPiece)
       pieces[currentPiece].setPosition(mousePosition.x - deltaX,
