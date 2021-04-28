@@ -1,13 +1,17 @@
-const numberOfCities = 15;
+const numberOfCities = 10;
 
 const numberOfChromosomes = 50;
 
-const numberOfIterations = 20;
+const numberOfIterations = 50;
 
-let cities = [];           //city = {id:"1"}
-let roads = [];            //road = {source:"1", target:"2"}, 5
-
+let cities = [];           //city = {id:"1", cords: [0.123, 45.1243]}
+let roads = [];            //road = {source:"1", target:"2"}, 51
+                                
 /////////AUXILIAR FUNCTIONS///////
+
+const eucledianDistance = (x1, y1, x2, y2) => {
+    return (Math.sqrt(Math.pow(x2-x1,2) + Math.pow(y2-y1,2)));
+}
 
 const shuffle =(array) => {
     let currentIndex = array.length, temporaryValue, randomIndex;
@@ -25,10 +29,14 @@ const shuffle =(array) => {
 /////////SETTING UP DATA GRAPH//////////
 const generateCities = () =>{
     for(let i = 0; i < numberOfCities; i++){
-        cities.push({id: i.toString()});
+        const x = (Math.random() * 200) - 100;
+        const y = (Math.random() * 160) - 80;
+        cities.push({id: i.toString(), coords: [x, y]});        
     }
+    console.log("CITIES",cities)
 }
 
+const linesForMap = [];
 
 const generateRoads = () => {
     const arrayOfRoads = [];
@@ -36,11 +44,13 @@ const generateRoads = () => {
         for(let j = i+1; j < numberOfCities; j++){
             const road = [];
             road.push({source: cities[i].id, target: cities[j].id});
-            road.push(Math.floor(Math.random()*10+1));
+            road.push(eucledianDistance(cities[i].coords[0], cities[i].coords[1], cities[j].coords[0], cities[j].coords[1]));
             arrayOfRoads.push(road);
+
+            linesForMap.push([[cities[i].coords, cities[j].coords]]);
         }
     }
-    console.log(arrayOfRoads);
+    console.log("Lines" ,linesForMap);
     return arrayOfRoads;
 }
 
@@ -261,30 +271,38 @@ const geneticAlgorithm = (numberOfIterations) => {
         dataForChart.push(getChromosomeFit(fitness(bestChromosomes, 1)[0]))
     }
 
-    //console.log(fitness(bestChromosomes, 1));
 
     return fitness(bestChromosomes, 1);
 }
 
 const solution = geneticAlgorithm(numberOfIterations);
+console.log("SOLUTION" ,solution);
+
+const getCoord = (id) => {
+    for(let i = 0; i < cities.length; i++){
+        if(cities[i].id === id){
+            return cities[i].coords;
+        }
+    }
+}
 
 const formatSolution = (solution) => {
     const shortestRoad = [];
     
-    shortestRoad.push({source: "0", target: solution[0][0]});
+    shortestRoad.push([cities[0].coords, getCoord(solution[0][0])]);
 
-
-    for(let i = 0; i < solution[0].length - 1; i++){
-        shortestRoad.push({source: solution[0][i], target: solution[0][i+1]});
+    for(let i = 0; i < solution[0].length -1; i++){
+        shortestRoad.push([getCoord(solution[0][i]), getCoord(solution[0][i+1])])
     }
-
-    shortestRoad.push({source: solution[0][solution[0].length-1], target: "0"});
     
+    shortestRoad.push([ getCoord(solution[0][solution[0].length-1]), cities[0].coords]);
+
     return shortestRoad;
 }
 
+
 const shortestRoad = formatSolution(solution);
 
-console.log(shortestRoad);
-console.log("DATA FOR CHART",dataForChart);
-export {cities, roads, shortestRoad, dataForChart};
+console.log("SHORTEST PATH",shortestRoad);
+
+export {cities, roads, shortestRoad, dataForChart, numberOfCities, linesForMap, numberOfIterations};

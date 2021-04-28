@@ -9,7 +9,6 @@ function MyChart(props) {
     currentData.push(props.dataForChart[i]);
     goChart.push(currentData);
   }
-  console.log("GOCHART",goChart)
   const data = React.useMemo(
     () => [
       {

@@ -1,7 +1,3 @@
-.App {
-  text-align: center;
-}
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -40,6 +36,11 @@
 .App{
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding-bottom: 7em;
+  align-items: flex-start;
+}
+
+.solution{
+  width: 100vw;
+  display: flex;
+  justify-content: center;
 }
