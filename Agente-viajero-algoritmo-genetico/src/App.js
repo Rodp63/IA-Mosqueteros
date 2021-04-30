@@ -4,21 +4,21 @@ import MyChart from './chart.component';
 import MapChart from './MapChart.component';
 import MapChartSolution from './MapChartSolution.component';
 
-import {dataForChart, numberOfCities, numberOfIterations} from './utils';
+import {dataForChart, numberOfCities, numberOfIterations, iterationsProm} from './utils';
 
 const App = () => {
   return (
     <div className="App">
       <span>DATOS</span>
-      <span>Numero de Nodos: {numberOfCities}</span>
-      <span>Numero de Iteraciones: {numberOfIterations}</span>
+      <span>Número de Nodos: {numberOfCities}</span>
+      <span>Número de Iteraciones: {numberOfIterations}</span>
       <br></br>
       <br></br>
-      <span>GRAFICA</span>
+      <span>GRÁFICA</span>
       <br></br>
       <br></br>
       <div className="solution">
-        <MyChart  dataForChart={dataForChart}/>
+        <MyChart  dataForChart={dataForChart} iterationsProm={iterationsProm}/>
       </div>
       <br></br>
       <br></br>
@@ -29,7 +29,7 @@ const App = () => {
       <div className="solution">
         <MapChart />
       </div>
-      <span>SOLUCION GENERADA</span>
+      <span>SOLUCIÓN GENERADA</span>
       <div className="solution">
         <MapChartSolution />
       </div>
