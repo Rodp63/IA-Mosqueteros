@@ -13,7 +13,7 @@ const eucledianDistance = (x1, y1, x2, y2) => {
     return (Math.sqrt(Math.pow(x2-x1,2) + Math.pow(y2-y1,2)));
 }
 
-const shuffle =(array) => {
+const shuffle = (array) => {
     let currentIndex = array.length, temporaryValue, randomIndex;
     while (0 !== currentIndex) {
       randomIndex = Math.floor(Math.random() * currentIndex);
@@ -33,7 +33,6 @@ const generateCities = () =>{
         const y = (Math.random() * 160) - 80;
         cities.push({id: i.toString(), coords: [x, y]});        
     }
-    console.log("CITIES",cities)
 }
 
 const linesForMap = [];
@@ -50,7 +49,6 @@ const generateRoads = () => {
             linesForMap.push([[cities[i].coords, cities[j].coords]]);
         }
     }
-    console.log("Lines" ,linesForMap);
     return arrayOfRoads;
 }
 
@@ -236,6 +234,18 @@ const initialChromosomes = generateChromosomes(numberOfChromosomes);
 
 const dataForChart = [];
 
+/****************/
+const iterationsProm = [];
+
+const addProm = (chromosomes) => {
+    let cum = 0;
+    for(let i = 0; i < chromosomes.length; i++){
+        cum+=getChromosomeFit(chromosomes[i]);
+    }
+    cum /= chromosomes.length;
+    iterationsProm.push(cum);
+}
+/****************/
 
 const geneticAlgorithm = (numberOfIterations) => {
 
@@ -265,12 +275,12 @@ const geneticAlgorithm = (numberOfIterations) => {
         for(let i = 0; i < newRandomChromosomes.length; i++){
             bestChromosomes.push(newRandomChromosomes[i]);   
         }
+        addProm(bestChromosomes);
 
         bestChromosomes = fitness(bestChromosomes, 50);
 
         dataForChart.push(getChromosomeFit(fitness(bestChromosomes, 1)[0]))
     }
-
 
     return fitness(bestChromosomes, 1);
 }
@@ -301,8 +311,10 @@ const formatSolution = (solution) => {
 }
 
 
+
+
 const shortestRoad = formatSolution(solution);
 
 console.log("SHORTEST PATH",shortestRoad);
 
-export {cities, roads, shortestRoad, dataForChart, numberOfCities, linesForMap, numberOfIterations};
+export {cities, roads, shortestRoad, dataForChart, numberOfCities, linesForMap, numberOfIterations, iterationsProm};

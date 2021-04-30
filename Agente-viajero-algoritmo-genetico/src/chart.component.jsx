@@ -9,11 +9,25 @@ function MyChart(props) {
     currentData.push(props.dataForChart[i]);
     goChart.push(currentData);
   }
+
+  const goChart1 = [];
+  for(let i = 0; i < props.iterationsProm.length; i++){
+    const currentData = [];  
+    currentData.push(i);
+    currentData.push(props.iterationsProm[i]);
+    goChart1.push(currentData);
+  }
+
+  console.log("GOOOO",goChart1);
   const data = React.useMemo(
     () => [
       {
         label: 'Iterations',
         data: goChart
+      },
+      {
+        label: 'PROM',
+        data: goChart1
       }
     ],
     []
