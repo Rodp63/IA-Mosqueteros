@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <time.h>
 // #include <SFML/Graphics.hpp>
+#include <vector>
 #include <map>
 
 enum NumberType {kZero, kOne, kTwo, kThree, kFour, kFive, kSix, kSeven, kEight, kNine};
@@ -144,7 +144,6 @@ int main() {
   NumberType result = Classify(input_data);
   std::cout << "Result: " << result << std::endl;
 
-  // srand(time(NULL));
   // sf::RenderWindow window(sf::VideoMode(520, 450), "OCR Perceptron");
   // window.setFramerateLimit(60);
 //
