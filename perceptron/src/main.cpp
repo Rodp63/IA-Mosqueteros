@@ -11,6 +11,10 @@ const float kInf = 1000.0f;
 const float kThreshold = 0.5f;
 const float kLearningRate = 0.1f;
 
+const int kRows = 8;
+const int kCols = 6;
+const int kTotal = kRows * kCols;
+
 struct Perceptron {
   std::vector<float> weights;
 };
@@ -26,11 +30,11 @@ void ReadTrainingData(std::string filename="../training_data.txt") {
 
   while (data_file >> type_str) {
     type = (NumberType)stoi(type_str);
-    std::vector<int> values(35, 0);
+    std::vector<int> values(kTotal, 0);
 
     std::string cur_val;
 
-    for (int i = 0; i < 35; ++i) {
+    for (int i = 0; i < kTotal; ++i) {
       data_file >> cur_val;
       values[i] = stoi(cur_val);
     }
@@ -128,54 +132,55 @@ NumberType Classify(std::vector<int> input_data) {
 }
 
 void PrintPattern(std::vector<int> &pattern) {
-  for (size_t i = 0; i < 13; ++i)
+  for (size_t i = 0; i < kCols * 2 + 3; ++i)
     std::cout << "-";
   std::cout << std::endl;
-  for (size_t i = 0; i < 7; ++i) {
+  for (size_t i = 0; i < kRows; ++i) {
     std::cout << "| ";
-    for (size_t j = 0; j < 5; ++j) {
-      char c = pattern[i*5+j] ? 'o' : ' ';
+    for (size_t j = 0; j < kCols; ++j) {
+      char c = pattern[i*kCols+j] ? 'o' : ' ';
       std::cout << c << " ";
     }
     std::cout << "|" << std::endl;
   }
-  for (size_t i = 0; i < 13; ++i)
+  for (size_t i = 0; i < kCols * 2 + 3; ++i)
     std::cout << "-";
   std::cout << std::endl;
 }
 
 int main() {
   
-  sf::RenderWindow window(sf::VideoMode(700, 1100), "Perceptron");
+  sf::RenderWindow window(sf::VideoMode(kCols * 100 + 200,
+                                        kRows * 100 + 400), "Perceptron");
   
-  std::vector<int> input_data(35, 0);
-  std::vector<sf::RectangleShape> grid(35);
+  std::vector<int> input_data(kTotal, 0);
+  std::vector<sf::RectangleShape> grid(kTotal);
   sf::RectangleShape solveButton;
   sf::RectangleShape answerBox;
   sf::Text buttonText;
   sf::Text answerText;
   sf::Font font;
   
-  for (size_t i = 0; i < 7; ++i) {
-    for (size_t j = 0; j < 5; ++j) {
-      size_t p = 5 * i + j;
+  for (size_t i = 0; i < kRows; ++i) {
+    for (size_t j = 0; j < kCols; ++j) {
+      size_t p = kCols * i + j;
       grid[p].setSize(sf::Vector2f(100, 100));
       grid[p].setFillColor(sf::Color::Black);
       grid[p].setOutlineColor(sf::Color::White);
-      grid[p].setOutlineThickness(5);
+      grid[p].setOutlineThickness(kCols);
       grid[p].setPosition(100+100*j, 100+100*i);
     }
   }
 
   solveButton.setSize(sf::Vector2f(200, 100));
   solveButton.setFillColor(sf::Color::Red);
-  solveButton.setPosition(100, 900);
+  solveButton.setPosition(100, 1000);
   solveButton.setOutlineColor(sf::Color::White);
   solveButton.setOutlineThickness(5);
 
   answerBox.setSize(sf::Vector2f(200, 100));
   answerBox.setFillColor(sf::Color::White);
-  answerBox.setPosition(400, 900);
+  answerBox.setPosition(500, 1000);
   answerBox.setOutlineColor(sf::Color::Red);
   answerBox.setOutlineThickness(5);
 
@@ -185,12 +190,12 @@ int main() {
   buttonText.setString("Guess");
   buttonText.setCharacterSize(55);
   buttonText.setFillColor(sf::Color::White);
-  buttonText.setPosition(120, 910);
+  buttonText.setPosition(120, 1010);
 
   answerText.setFont(font);
   answerText.setCharacterSize(50);
   answerText.setFillColor(sf::Color::Red);
-  answerText.setPosition(480, 920);
+  answerText.setPosition(580, 1020);
   
   CreateTrainedPerceptrons();
 
@@ -203,7 +208,7 @@ int main() {
       
       if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         sf::Vector2i position = sf::Mouse::getPosition(window);
-        for (size_t i = 0; i < 35; ++i) {
+        for (size_t i = 0; i < kTotal; ++i) {
           sf::Vector2f origin = grid[i].getPosition();
           if (origin.x < position.x &&
               origin.y < position.y &&
@@ -229,7 +234,7 @@ int main() {
     }
     
     window.clear();
-    for (size_t i = 0; i < 35; ++i)
+    for (size_t i = 0; i < kTotal; ++i)
       window.draw(grid[i]);
     window.draw(solveButton);
     window.draw(buttonText);
