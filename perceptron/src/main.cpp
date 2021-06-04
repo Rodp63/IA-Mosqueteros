@@ -70,14 +70,19 @@ Perceptron Train(std::vector<std::pair<std::vector<int>, bool>> training_set) {
     int error_count = 0;
 
     for (const auto& [input_vector, desired_output] : training_set) {
-      auto result = DotProduct(input_vector, weights) > kThreshold;
+      float dp = DotProduct(input_vector, weights);
+      bool result = dp > kThreshold;
       int error = desired_output - result;
 
       if (error) {
         ++error_count;
 
-        for (size_t i = 0; i < input_vector.size(); ++i)
+        // std::cout << "Updated weights:\n";
+        for (size_t i = 0; i < input_vector.size(); ++i) {
           weights[i] += (kLearningRate * error * input_vector[i]);
+          // std::cout << weights[i] << " ";
+        }
+        // std::cout << std::endl;
       }
     }
 
@@ -95,8 +100,10 @@ void CreateTrainedPerceptrons() {
   std::cout << "Training perceptrons... Threshold: " << kThreshold << std::endl;
 
   for (auto it = data.begin(); it != data.end();
-       it = data.upper_bound(it->first))
+       it = data.upper_bound(it->first)) {
+    std::cout << "Training neuron " << it->first << std::endl;
     trained_perceptrons[it->first] = Train(CreateTrainingSet(it->first));
+  }
 
   std::cout << "Perceptrons trained!" << std::endl;
 }
